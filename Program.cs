@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace LeetCode
@@ -226,6 +227,185 @@ namespace LeetCode
             Assert.Equal(0, Solution4.FindMedianSortedArrays(new int[] { 0, 0 }, new int[] { 0, 0 }));
             Assert.Equal(1, Solution4.FindMedianSortedArrays(new int[] { }, new int[] { 1 }));
             Assert.Equal(2, Solution4.FindMedianSortedArrays(new int[] { 2 }, new int[] { }));
+        }
+    }
+    public class Solution5
+    {
+        public static string LongestPalindrome(string s)
+        {
+            if (s.Length == 1 || s.Length == 0)
+            {
+                return s;
+            }
+            var pals = s.Select((v, i) =>
+              {
+                  var x = i + 1;
+                  var res = $"{v}";
+                  var resLength = 0;
+                  var indexes = s.Select((y, j) => y == v ? j : -1).Where(e => e != -1).Reverse();
+                  foreach (var next in indexes)
+                  {
+                      if (next != -1)
+                      {
+                          if (next - i < resLength)
+                          {
+                              continue;
+                          }
+                          if (Enumerable.Range(i, next - i).All(e => s[e] == s[(next - e) + i]))
+                          {
+                              if (resLength < next - i)
+                              {
+                                  res = s.Substring(i, next - i + 1);
+                                  resLength = next - i;
+                              }
+                          }
+                          x = next + 1;
+                      }
+                  }
+                  return res;
+              });
+            return pals.OrderByDescending(e => e.Length).First();
+        }
+        [Fact]
+        public void LongestPalindromeTest()
+        {
+            Assert.Equal("bab", Solution5.LongestPalindrome("babad"));
+            Assert.Equal("bb", Solution5.LongestPalindrome("cbbd"));
+            Assert.Equal("a", Solution5.LongestPalindrome("a"));
+            Assert.Equal("a", Solution5.LongestPalindrome("ac"));
+            Assert.Equal("aba", Solution5.LongestPalindrome("caba"));
+            Assert.Equal(new string('b', 1000), Solution5.LongestPalindrome(new string('b', 1000)));
+        }
+
+    }
+
+    public class Solution6
+    {
+        public static string Convert(string s, int numRows)
+        {
+            var list = new List<List<char>>();
+            foreach (var x in Enumerable.Range(0, numRows))
+            {
+                list.Add(new List<char>());
+            }
+            int i = 0;
+            bool dir = true;
+            int max = numRows - 1;
+            foreach (var x in s)
+            {
+                list[i].Add(x);
+                if (dir)
+                {
+                    i++;
+                    if (i == max)
+                    {
+                        dir = false;
+                    }
+                }
+                else
+                {
+                    i--;
+                    if (i == 0)
+                    {
+                        dir = true;
+                    }
+                }
+                if (i > max)
+                {
+                    i--;
+                }
+            }
+            return string.Concat(list.Select(e => string.Join("", e)));
+        }
+        [Fact]
+        public void ConvertTest()
+        {
+            Assert.Equal("PAHNAPLSIIGYIR", Solution6.Convert("PAYPALISHIRING", 3));
+            Assert.Equal("PINALSIGYAHRPI", Solution6.Convert("PAYPALISHIRING", 4));
+            Assert.Equal("A", Solution6.Convert("A", 1));
+            Assert.Equal("AB", Solution6.Convert("AB", 1));
+        }
+    }
+    public class Solution7
+    {
+        public static int Reverse(int x)
+        {
+            try
+            {
+                if (x < 0)
+                {
+                    return -1 * int.Parse(string.Join("", x.ToString()[1..].Reverse().SkipWhile(e => e == '0')));
+                }
+                else if (x > 0)
+                {
+                    return int.Parse(string.Join("", x.ToString().Reverse().SkipWhile(e => e == '0')));
+                }
+                return 0;
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
+        [Fact]
+        public void ReverseTest()
+        {
+            Assert.Equal(321, Solution7.Reverse(123));
+            Assert.Equal(-321, Solution7.Reverse(-123));
+            Assert.Equal(21, Solution7.Reverse(120));
+            Assert.Equal(0, Solution7.Reverse(0));
+            Assert.Equal(0, Solution7.Reverse(1534236469));
+        }
+    }
+    public class Solution8
+    {
+        public static int MyAtoi(string s)
+        {
+            var str = s.Trim();
+            var op = string.Join("", str.TakeWhile(e => Regex.IsMatch($"{e}", "[\\-\\+]")));
+            var num = string.Join("", str.Skip(op.Length).TakeWhile(e => Regex.IsMatch($"{e}", "[0-9]")));
+            str = op + num;
+            if (str.Length == 0 || Regex.IsMatch(str, "[+-]{2}") || (str.Length == 1 && Regex.IsMatch(str, "[+-]")) || !Regex.IsMatch(str, "^[+-]?[0-9]+$"))
+            {
+                return 0;
+            }
+            if (str[0] == '-')
+            {
+                try
+                {
+                    return int.Parse(str);
+                }
+                catch (Exception)
+                {
+                    return int.MinValue;
+                }
+            }
+            else
+            {
+                try
+                {
+                    return int.Parse(str);
+                }
+                catch (Exception)
+                {
+                    return int.MaxValue;
+                }
+            }
+        }
+
+        [Fact]
+        public void MyAtoiTest()
+        {
+            Assert.Equal(42, Solution8.MyAtoi("42"));
+            Assert.Equal(-42, Solution8.MyAtoi("   -42"));
+            Assert.Equal(4193, Solution8.MyAtoi("4193 with words"));
+            Assert.Equal(0, Solution8.MyAtoi("words and 987"));
+            Assert.Equal(int.MinValue, Solution8.MyAtoi("-91283472332"));
+            Assert.Equal(0, Solution8.MyAtoi("-+12"));
+            Assert.Equal(1, Solution8.MyAtoi("+1"));
+            Assert.Equal(0, Solution8.MyAtoi("+"));
+            Assert.Equal(0, Solution8.MyAtoi("00000-42a1234"));
+            Assert.Equal(-5, Solution8.MyAtoi("-5-"));
         }
     }
 }
